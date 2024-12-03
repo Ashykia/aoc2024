@@ -2,20 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../common/dynamic_array.h"
 
-typedef struct {
-    int length;
-    char** data;
-} FileContents;
-
-void destroy_FileContents(FileContents* file_contents) {
-    for (int position = 0; position < file_contents->length; position++) {
-        free(file_contents->data[position]);
-        file_contents->data[position] = NULL;
-    }
-    free(file_contents->data);
-    file_contents->data = NULL;
-}
+DYNAMIC_ARRAY(char*, FileContents)
+DYNAMIC_ARRAY(int, IntArray)
 
 char* get_path_from_args(int argc, char** argv) {
     if (argc < 2) {
@@ -31,21 +21,18 @@ char* get_path_from_args(int argc, char** argv) {
     return file_path;
 }
 
-FileContents read_lines(FILE* input_file) {
+FileContents* read_lines(FILE* input_file) {
     char* line = NULL;
     size_t buffer_length = 0;
-    FileContents input;
-    input.length = 0;
-    input.data = NULL;
+    FileContents* input = construct_FileContents();
     size_t input_size = 0;
     size_t line_length = 0;
+    char* tmp;
 
     while ((line_length = getline(&line, &buffer_length, input_file)) != -1) {
-        input.data = realloc(input.data, sizeof(char*) * (input.length + 1));
-        input_size = input_size + line_length + 1;
-        input.data[input.length] = malloc(line_length + 1);
-        strcpy(input.data[input.length], line);
-        input.length++;
+        tmp = malloc(line_length + 1);
+        strcpy(tmp, line);
+        append_to_FileContents(input, tmp);
     }
     free(line);
     return input;
@@ -57,19 +44,21 @@ int main(int argc, char** argv) {
         return 1;
     }
     FILE* input_file = fopen(file_path, "r");
-    FileContents input = read_lines(input_file);
+    FileContents* input = read_lines(input_file);
     fclose(input_file);
 
-    int* first_numbers = NULL;
-    int* second_numbers = NULL;
-    int numbers_length = 0;
+    IntArray* first_numbers = construct_IntArray();
+    IntArray* second_numbers = construct_IntArray();
+    int first_number;
+    int second_number;
 
-    for (int position = 0; position < input.length; position++) {
-        char* line = input.data[position];
-        first_numbers = realloc(first_numbers, sizeof(int) * (numbers_length + 1));
-        second_numbers = realloc(second_numbers, sizeof(int) * (numbers_length + 1));
-        sscanf(line, "%d   %d\n", &first_numbers[position], &second_numbers[position]);
-        numbers_length++;
+    for (int position = 0; position < input->length; position++) {
+        char* line = input->data[position];
+        first_number = 0;
+        second_number = 0;
+        sscanf(line, "%d   %d\n", &first_number, &second_number);
+        append_to_IntArray(first_numbers, first_number);
+        append_to_IntArray(second_numbers, second_number);
     }
 
     int compare_numbers(const void* pointer1, const void* pointer2) {
@@ -84,15 +73,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    qsort(first_numbers, numbers_length, sizeof(int), &compare_numbers);
-    qsort(second_numbers, numbers_length, sizeof(int), &compare_numbers);
+    qsort(first_numbers->data, first_numbers->length, sizeof(int), &compare_numbers);
+    qsort(second_numbers->data, second_numbers->length, sizeof(int), &compare_numbers);
     int accumulator = 0;
-    for (int position = 0; position < numbers_length; position++) {
-        accumulator += abs(first_numbers[position] - second_numbers[position]);
+    for (int position = 0; position < first_numbers->length; position++) {
+        accumulator += abs(first_numbers->data[position] - second_numbers->data[position]);
     }
     printf("%d\n", accumulator);
-    destroy_FileContents(&input);
-    free(first_numbers);
-    free(second_numbers);
+    wipe_pointer_array(input->data, input->length);
+    destroy_FileContents(input);
+    destroy_IntArray(first_numbers);
+    destroy_IntArray(second_numbers);
     return 0;
 }
