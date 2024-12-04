@@ -1,9 +1,8 @@
-#include "../common/dynamic_array.h"
-#include "../common/file_utils.h"
 #ifndef DAY1_H
 #define DAY1_H
-
-DYNAMIC_ARRAY_DECLARES(int, IntArray)
+#include "../common/dynamic_array.h"
+#include "../common/file_utils.h"
+#include "../common/int_utils.h"
 
 struct InputData {
     IntArray* left_hand_side;

@@ -1,22 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "day1.h"
-#include "../common/dynamic_array.h"
 #include "../common/file_utils.h"
-
-DYNAMIC_ARRAY_IMPL(int, IntArray)
-
-int compare_numbers(const void* pointer1, const void* pointer2) {
-    int* number1 = (int*) pointer1;
-    int* number2 = (int*) pointer2;
-    if (*number1 < *number2) {
-        return -1;
-    }
-    if (*number1 == *number2) {
-        return 0;
-    }
-    return 1;
-}
+#include "../common/int_utils.h"
 
 struct InputData get_input(FileContents* file_contents) {
     struct InputData input;
